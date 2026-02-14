@@ -1,21 +1,11 @@
 import fs from "fs-extra";
 import { execSync } from "child_process";
-import { HfInference } from "@huggingface/inference";
+import OpenAI from "openai";
 
-const hf = new HfInference(process.env.HF_API_KEY);
-
-async function hfGenerate(prompt) {
-  const response = await hf.textGeneration({
-    model: "HuggingFaceH4/zephyr-7b-beta",
-    inputs: prompt,
-    parameters: {
-      temperature: 0,
-      max_new_tokens: 400
-    }
-  });
-
-  return response.generated_text.trim();
-}
+const client = new OpenAI({
+  apiKey: process.env.OPENROUTER_API_KEY,
+  baseURL: "https://openrouter.ai/api/v1"
+});
 
 async function generateUI() {
   const html = `
@@ -43,16 +33,25 @@ async function generateUI() {
 }
 
 async function generateLogic() {
-  const prompt = `
+  const response = await client.chat.completions.create({
+    model: "openai/gpt-3.5-turbo",   // free/cheap via OpenRouter
+    temperature: 0,
+    messages: [
+      {
+        role: "user",
+        content: `
 Create JavaScript file logic.js.
 Add click event to #calculate.
 Multiply #price and #quantity.
 Display result inside #total.
 Use parseFloat.
-Return only JavaScript code.
-`;
+Return ONLY JavaScript code.
+`
+      }
+    ]
+  });
 
-  const output = await hfGenerate(prompt);
+  const output = response.choices[0].message.content;
   await fs.writeFile("project/logic.js", output);
 }
 
