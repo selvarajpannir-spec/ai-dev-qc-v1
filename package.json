@@ -1,10 +1,15 @@
 {
   "name": "ai-dev-qc-v1",
   "version": "1.0.0",
+  "description": "Cloud-based AI Dev + QC V1 using Hugging Face",
   "type": "module",
+  "scripts": {
+    "start": "node orchestrator.js",
+    "test": "npx playwright test"
+  },
   "dependencies": {
     "@playwright/test": "^1.42.0",
     "fs-extra": "^11.2.0",
-    "node-fetch": "^3.3.2"
+    "@huggingface/inference": "^2.6.4"
   }
 }
