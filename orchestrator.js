@@ -4,9 +4,12 @@ import fetch from "node-fetch";
 
 const HF_API_KEY = process.env.HF_API_KEY;
 
+/**
+ * Call Hugging Face Router API
+ */
 async function hfGenerate(prompt) {
   const response = await fetch(
-    "https://api-inference.huggingface.co/models/deepseek-ai/deepseek-coder-6.7b-instruct",
+    "https://router.huggingface.co/hf-inference/models/deepseek-ai/deepseek-coder-6.7b-instruct",
     {
       method: "POST",
       headers: {
@@ -17,7 +20,8 @@ async function hfGenerate(prompt) {
         inputs: prompt,
         parameters: {
           temperature: 0,
-          max_new_tokens: 400
+          max_new_tokens: 400,
+          return_full_text: false
         }
       })
     }
@@ -25,23 +29,39 @@ async function hfGenerate(prompt) {
 
   const result = await response.json();
 
-  if (result.error) {
-    throw new Error(result.error);
+  if (!response.ok) {
+    console.error("HF API Error:", result);
+    throw new Error(result.error || "HF API failed");
   }
 
-  return result[0].generated_text;
+  if (!result || !result[0] || !result[0].generated_text) {
+    console.error("Unexpected HF response:", result);
+    throw new Error("Invalid HF response format");
+  }
+
+  return result[0].generated_text.trim();
 }
 
+/**
+ * Generate static UI (locked)
+ */
 async function generateUI() {
   const html = `
 <!DOCTYPE html>
 <html>
+<head>
+  <title>Calculator</title>
+</head>
 <body>
+
 <input id="price" type="number" />
 <input id="quantity" type="number" />
 <button id="calculate">Calculate</button>
+
 <div id="total"></div>
+
 <script src="logic.js"></script>
+
 </body>
 </html>
 `;
@@ -50,40 +70,58 @@ async function generateUI() {
   await fs.writeFile("project/index.html", html);
 }
 
+/**
+ * Generate logic.js using HF
+ */
 async function generateLogic() {
   const prompt = `
-Create JavaScript logic.js file.
-Add click event on #calculate.
-Multiply #price * #quantity.
-Set result to #total.
-Return only JavaScript code.
+Create a JavaScript file named logic.js.
+
+Requirements:
+- Add click event listener to element with id "calculate"
+- Multiply values from #price and #quantity
+- Display result inside element #total
+- Use parseFloat for numbers
+- No explanation
+- Return ONLY JavaScript code
 `;
 
   const output = await hfGenerate(prompt);
   await fs.writeFile("project/logic.js", output);
 }
 
+/**
+ * Run Playwright test
+ */
 function runTests() {
   try {
     execSync("npx playwright install --with-deps", { stdio: "inherit" });
     execSync("npx playwright test", { stdio: "inherit" });
     return true;
-  } catch {
+  } catch (error) {
+    console.error("Test execution failed.");
     return false;
   }
 }
 
+/**
+ * Main execution
+ */
 async function main() {
+  console.log("Generating UI...");
   await generateUI();
+
+  console.log("Generating logic.js...");
   await generateLogic();
 
+  console.log("Running tests...");
   const success = runTests();
 
   if (!success) {
-    console.log("Test failed.");
+    console.log("Tests failed.");
   } else {
-    console.log("All tests passed.");
+    console.log("All tests passed successfully.");
   }
 }
 
-main();
+main();main();
