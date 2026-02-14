@@ -1,0 +1,10 @@
+{
+  "name": "ai-dev-qc-v1",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "@playwright/test": "^1.42.0",
+    "fs-extra": "^11.2.0",
+    "node-fetch": "^3.3.2"
+  }
+}
