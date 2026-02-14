@@ -4,12 +4,9 @@ import fetch from "node-fetch";
 
 const HF_API_KEY = process.env.HF_API_KEY;
 
-/**
- * Call Hugging Face Router API
- */
 async function hfGenerate(prompt) {
   const response = await fetch(
-    "https://router.huggingface.co/hf-inference/models/deepseek-ai/deepseek-coder-6.7b-instruct",
+    "https://router.huggingface.co/hf-inference/models/codellama/CodeLlama-7b-Instruct-hf",
     {
       method: "POST",
       headers: {
@@ -27,24 +24,29 @@ async function hfGenerate(prompt) {
     }
   );
 
-  const result = await response.json();
+  const text = await response.text();
 
   if (!response.ok) {
-    console.error("HF API Error:", result);
-    throw new Error(result.error || "HF API failed");
+    console.error("HF ERROR:", text);
+    throw new Error("HF request failed");
   }
 
-  if (!result || !result[0] || !result[0].generated_text) {
-    console.error("Unexpected HF response:", result);
-    throw new Error("Invalid HF response format");
+  let result;
+  try {
+    result = JSON.parse(text);
+  } catch (err) {
+    console.error("Invalid JSON response:", text);
+    throw err;
+  }
+
+  if (!result[0] || !result[0].generated_text) {
+    console.error("Unexpected HF format:", result);
+    throw new Error("Invalid HF format");
   }
 
   return result[0].generated_text.trim();
 }
 
-/**
- * Generate static UI (locked)
- */
 async function generateUI() {
   const html = `
 <!DOCTYPE html>
@@ -70,29 +72,20 @@ async function generateUI() {
   await fs.writeFile("project/index.html", html);
 }
 
-/**
- * Generate logic.js using HF
- */
 async function generateLogic() {
   const prompt = `
-Create a JavaScript file named logic.js.
-
-Requirements:
-- Add click event listener to element with id "calculate"
-- Multiply values from #price and #quantity
-- Display result inside element #total
-- Use parseFloat for numbers
-- No explanation
-- Return ONLY JavaScript code
+Create JavaScript file logic.js.
+Add click event to #calculate.
+Multiply #price and #quantity.
+Display result inside #total.
+Use parseFloat.
+Return only JavaScript code.
 `;
 
   const output = await hfGenerate(prompt);
   await fs.writeFile("project/logic.js", output);
 }
 
-/**
- * Run Playwright test
- */
 function runTests() {
   try {
     execSync("npx playwright install --with-deps", { stdio: "inherit" });
@@ -104,9 +97,6 @@ function runTests() {
   }
 }
 
-/**
- * Main execution
- */
 async function main() {
   console.log("Generating UI...");
   await generateUI();
@@ -124,4 +114,4 @@ async function main() {
   }
 }
 
-main();main();
+main();
