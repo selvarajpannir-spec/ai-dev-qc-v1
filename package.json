@@ -1,7 +1,7 @@
 {
   "name": "ai-dev-qc-v1",
   "version": "1.0.0",
-  "description": "Cloud-based AI Dev + QC V1 using Hugging Face",
+  "description": "Cloud-based AI Dev + QC V1 using OpenRouter",
   "type": "module",
   "scripts": {
     "start": "node orchestrator.js",
@@ -10,6 +10,6 @@
   "dependencies": {
     "@playwright/test": "^1.42.0",
     "fs-extra": "^11.2.0",
-    "@huggingface/inference": "^2.6.4"
+    "openai": "^4.56.0"
   }
 }
